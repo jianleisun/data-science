@@ -1,6 +1,3 @@
----
-output: html_document
----
 
 ## CodeBook by Jianlei(John), Mon Oct 17 2016 CST
 
