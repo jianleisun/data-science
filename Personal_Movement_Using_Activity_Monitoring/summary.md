@@ -1,11 +1,5 @@
+# Reproducible Research Project
 
----
-title: "Reproducible Research Project"
-
-output: 
-  html_document:
-    keep_md: true
----
 
 
 *Author: Jianlei (John) Sun Sat Oct 22 2016*
@@ -36,7 +30,8 @@ The dataset is stored in a comma-separated-value (CSV) file and there are a tota
 
 ### 3.1 Load the data
 
-```{r}
+
+```r
 datainput <- function()
 {
     URL <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
@@ -57,7 +52,8 @@ Change the "interval" variable to minutes, i.e., change 100, 200, etc to 0.
 
 For each day, there will be 288 counts of continueous intervals, with each interval eqaul to 5 mintues.
 
-```{r}
+
+```r
 dataTransform <- function(data)
 {
     intervals <- seq(0,1435,5)
@@ -79,26 +75,40 @@ data <- dataTransform(data)
 
 ### 4.1 Aggregate/Calcuate the total number of steps by date
         
-```{r}
+
+```r
 data1 <- aggregate(steps ~ date, data = data, FUN = sum)
 ```
 
 ### 4.2 Plot the histogram of the total number of steps taken each day
 
-```{r}
+
+```r
 hist(data1$step, xlab = "Steps per day", main = "Histogram of the total number of steps taken per day")
 ```
+
+![](summary_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
 
 ### 4.3 Calculate and report the mean and median total number of steps taken per day
 
 Calculate the mean:
-```{r}
+
+```r
 mean(data1$step)
 ```
 
+```
+## [1] 10766.19
+```
+
 Calculate the median:
-```{r}
+
+```r
 median(data1$step)
+```
+
+```
+## [1] 10765
 ```
 
 ## 5. What is the average daily activity pattern?
@@ -107,20 +117,29 @@ median(data1$step)
 
 Compute the averaged steps by intervals:
   
-```{r}
+
+```r
 data2 <- aggregate(steps ~ interval, data = data, FUN = mean, na.rm = TRUE)
 ```
 
 Plot the averaged steps vs. time series of intervals:
 
-```{r}
+
+```r
 plot(data2$steps ~ data2$interval,type = "l", xlab ="Time, 5-minute intervals", ylab="Averaged steps across all days", main="Averaged daily activity pattern")
 ```
 
+![](summary_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
 ### 5.2 Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
-```{r}
+
+```r
 data2$interval[which.max(data2$steps)]
+```
+
+```
+## [1] 515
 ```
 
 ## 6. Imputing missing values
@@ -129,15 +148,21 @@ Note that there are a number of days/intervals where there are missing values (c
 
 ### 6.1 Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
 
-```{r}
+
+```r
 sum(is.na(data))
+```
+
+```
+## [1] 2304
 ```
 
 ### 6.2 Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
 
 My approach was to use the mean for that 5-minute interval to fill up all the missing values.
 
-```{r}
+
+```r
 dataNAfilling <- function(data, dataMean)
 {
     for(i in 1:nrow(data))
@@ -153,41 +178,61 @@ dataNAfilling <- function(data, dataMean)
 
 ### 6.3 Create a new dataset that is equal to the original dataset but with the missing data filled in.
 
-```{r}
+
+```r
 newdata <- dataNAfilling(data, data2)
 ```
 
 The number of missing values in the new data set equals to zero now.
 
-```{r}
+
+```r
 sum(is.na(newdata))
+```
+
+```
+## [1] 0
 ```
 
 ### 6.4 Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
 Aggregate/Sum the steps by date.
 
-````{r}
+
+```r
 data3 <- aggregate(steps ~ date, data = newdata, FUN = sum)
 ```
 
 Plot the histogram of the total number of steps taken per day.
 
-```{r}
+
+```r
 hist(data3$step, xlab = "Total steps per day", col = "red", 
      main = "Total steps per day after imputing missing valuess")
 ```
 
+![](summary_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+
 Compute the mean total number of steps taken per day after imputing missing values.
 
-```{r}
+
+```r
 mean(data3$step)
+```
+
+```
+## [1] 10766.19
 ```
 
 Compute the median total number of steps taken per day after imputing missing values.
 
-```{r}
+
+```r
 median(data3$step)
+```
+
+```
+## [1] 10766.19
 ```
 
 Answer: 
@@ -196,7 +241,8 @@ In the first part of the assignment, we obained 10766.19 steps for the mean, and
 
 From the following comparision of the two histograms between before and after imputing missing values, we found a very large overlaped region (i.e., yellow region due to overlap of green&red). The difference between the red and green region is due to impuputing missing values.
 
-```{r}
+
+```r
 hist(data3$step, xlab = "Total steps per day", col = "red", 
      main = "Total steps per day after imputing missing valuess")
 
@@ -207,13 +253,16 @@ legend('topleft',c('After NA Filling', 'Orignal Data'),
        fill = c("red", rgb(0, 1, 0, 0.5)), bty = 'n', border = NA)
 ```
 
+![](summary_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+
 ## 7. Are there differences in activity patterns between weekdays and weekends?
 
 For this part the weekdays() function may be of some help here. Use the dataset with the filled-in missing values for this part.
 
 ### 7.1 Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
 
-```{r}
+
+```r
 funWeekdays <- function(data)
 {
     data$weekDays <- weekdays(as.Date(data$date))
@@ -237,17 +286,21 @@ data4 <- funWeekdays(newdata)
 
 Aaggregate the averaged steps by interval and weekday.
 
-```{r}
+
+```r
 data44 <- aggregate(steps ~ interval + weekDays, data = data4, FUN = mean)
 ```
 
 Plot the averaged number of steps of the 5-minute intervals for both weekday and weekend.
 
-```{r}
+
+```r
 library(lattice)
 
 xyplot(steps ~ interval | weekDays, data = data44, layout=c(1,2), type ="l", main ="Comprison of activity patterns between weekdays and weekends")
 ```
+
+![](summary_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
 
 
