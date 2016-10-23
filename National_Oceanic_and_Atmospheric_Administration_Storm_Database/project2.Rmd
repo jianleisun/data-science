@@ -1,0 +1,166 @@
+Project 2 - NOAA Storm Database
+=========================================================
+
+Author: Jianlei(John) Sun, Sun Oct 23 2016
+
+## 1. Synopsis
+Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. Many severe events can result in fatalities, injuries, and property damage, and preventing such outcomes to the extent possible is a key concern.
+
+This project involves exploring the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. This database tracks characteristics of major storms and weather events in the United States, including when and where they occur, as well as estimates of any fatalities, injuries, and property damage. In this data anlysis, we will answer the following two questions:
+
+* Across the United States, which types of events (as indicated in the 𝙴𝚅𝚃𝚈𝙿𝙴 variable) are most harmful with respect to population health?
+
+* Across the United States, which types of events have the greatest economic consequences?
+
+## 2. Data Processing
+
+### 2.1 Input Data Information
+
+The data for this assignment come in the form of a comma-separated-value file compressed via the bzip2 algorithm to reduce its size. You can download the file from the course web site:
+
+Storm Data [47Mb](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2)
+There is also some documentation of the database available. Here you will find how some of the variables are constructed/defined.
+
+* National Weather Service Storm [Data Documentation](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf)
+
+* National Climatic Data Center Storm Events [FAQ](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2FNCDC%20Storm%20Events-FAQ%20Page.pdf)
+
+The events in the database start in the year 1950 and end in November 2011. In the earlier years of the database there are generally fewer events recorded, most likely due to a lack of good records. More recent years should be considered more complete.
+
+### 2.2 Data Download and Read into "R"
+
+The function below was used to download, extract and load the data.
+```{r, cache = TRUE}
+dataInput <- function() {
+    URL <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+    fileName = "dataset.csv.bz2"
+    if (!file.exists(fileName)) {
+        download.file(URL, fileName, "curl")
+    }
+    data <- read.csv(fileName)
+}
+data <- dataInput()
+```
+
+### 2.3 Data Statistics
+
+The names of the columns:
+```{r}
+names(data)
+```
+
+The number of the rows:
+```{r}
+nrow(data)
+```
+
+## 3. Results
+
+### 3.1 Across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to population health?
+
+For this section, two columns such as "FATALITIES" and "INJURIES" can be used to resole this question.
+
+1) Load the Libraries
+
+```{r}
+library(ggplot2)
+library(grid)
+library(gridExtra)
+```
+
+2) Aggregate the total of fatalities and injuries by the event type "EVTYPE".
+
+```{r}
+dataFATALITIES <- aggregate(FATALITIES ~ EVTYPE, data = data, FUN = sum)
+dataINJURIES   <- aggregate(INJURIES   ~ EVTYPE, data = data, FUN = sum)
+```
+
+3) Select the top 5 most harmful events in terms of "FATALITIES" and "INJURIES".
+
+```{r}
+dataFATALITIES <- head(dataFATALITIES[ order(-dataFATALITIES[,2]), ],5)
+dataINJURIES <- head(dataINJURIES[ order(-dataINJURIES[,2]), ],5)
+```
+
+4) Plot the barcharts for the top 5 most harful events.
+
+```{r}
+dataFATALITIES$EVTYPE <- factor(dataFATALITIES$EVTYPE, 
+    levels=dataFATALITIES[order(dataFATALITIES$FATALITIES),"EVTYPE"])
+plot1 <- ggplot(data=dataFATALITIES, aes(x=EVTYPE, y=FATALITIES, fill=EVTYPE)) +
+    xlab("The Name of the Event Types") + ylab("The number of FATALITIES") + guides(fill=FALSE) +
+    geom_bar(colour="black", fill="#DD8888",stat="identity") +
+    ggtitle("Top 5 Most Harmful Event for INJURIES") + coord_flip()
+                
+dataINJURIES$EVTYPE <- factor(dataINJURIES$EVTYPE, 
+    levels=dataINJURIES[order(dataINJURIES$INJURIES),"EVTYPE"])
+plot2 <- ggplot(data=dataINJURIES, aes(x=EVTYPE, y=INJURIES, fill=EVTYPE)) +
+    xlab("The Name of the Event Types") + ylab("The number of INJURIES") + guides(fill=FALSE) +
+    geom_bar(colour="black", fill="#DD8888",stat="identity") +
+    ggtitle("Top 5 Most Harmful Event for INJURIES") + coord_flip()
+
+grid.arrange(plot1, plot2, nrow=2)
+```
+
+Answer: the plot shows the top 5 most harmful events in terms of "INJURIES" and "FATALITIES", and the event type of "TORNADO" ranks the first for both charts. Therefore, we conclude that "TORNADO" is the most harmful with respect to population health.
+
+### 3.2 Across the United States, which types of events have the greatest economic consequences?
+
+In this section, four variables **PROPDMG, CROPDMG**, **PROPDMGEXP** and **CROPDMGEXP** are considered to be related with economic consequences, which are taken from [Weather Service Storm Data Documentation](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf).
+
+- **PROPDMG** refers to property damage, which is computed from **PROPDMG * 10 ^ (PROPDMGEXP)**.
+- **CROPDMG** refers to crop damage, which is estimated from  **CROPDMG * 10 ^(CROPDMGEXP)**
+- **PROPDMGEXP** and **CROPDMGEXP** are orders of magnitude. Symbols such as "H", "K", "M", and "B" represent hundred,        thousand, million, and billion, respectively. The other symbols such as '+', '-' and '?' indicate missing values.
+- Economic damage of each event type is computed from **PROPDMG * 10 ^ PROPDMGEXP + CROPDMG * 10 ^ CROPDMGEXP**.
+
+1) Transform both "PROPDMGEXP" and "CROPDMGEXP" in order to compute economic damage:
+
+```{r}
+data2 <- data[c("EVTYPE","PROPDMG","PROPDMGEXP","CROPDMG","CROPDMGEXP")]
+
+funDataTransform <- function(datasub) {
+    old <- c("[Hh]","[Kk]","[Mm]","[Bb]","[+-/?]")
+    new <- c("2","3","6","9","0")
+    for (i in 1:length(new)) {
+        datasub <- sub(old[i], new[i],datasub)
+    }
+    datasub[datasub == ""] <- "0"
+    datasub <- as.numeric(datasub)
+    datasub
+}
+
+data2$PROPDMGEXP = funDataTransform(data2$PROPDMGEXP)
+data2$CROPDMGEXP = funDataTransform(data2$CROPDMGEXP)
+```
+
+2) Compute the total economic damage for each event type:
+
+```{r}
+data2$damage <- data2$PROPDMG * 10 ^ data2$PROPDMGEXP + data2$CROPDMG * 10 ^ data2$CROPDMGEXP
+```
+
+3) Aggregate the economic damage based on the "EVTYPE":
+
+```{r}
+dataDamage <- aggregate(damage ~ EVTYPE, data = data2, FUN = sum)
+```
+
+4) Select the top 5 events that has most economic consequences:
+
+```{r}
+dataDamage <- head(dataDamage[ order(-dataDamage[,2]), ], 5)
+```
+
+5) Plot the top 5 events that has most economic consequences:
+
+```{r}
+dataDamage$EVTYPE <- factor(dataDamage$EVTYPE, levels = dataDamage[order(dataDamage$damage),"EVTYPE"])
+ggplot(data=dataDamage, aes(x=EVTYPE, y=damage, fill=EVTYPE)) +
+    xlab("The Name of the Event Types") + ylab("Economic Damage, $") + guides(fill=FALSE) +
+    geom_bar(colour="black", fill="#DD8888",stat="identity") +
+    ggtitle("Top 5 Greatest Events for Economic Consequences") + coord_flip()
+```
+
+Answer: Flood has the greatest economic consequences that caused around 150 billion dollars, which is followed by Hurrican/Typhoon, Torando, etc.
+
+
