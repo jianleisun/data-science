@@ -1,4 +1,4 @@
-# Reproducible Research Project
+# Personal Movement Activity Monitoring - Reproducible Research Project
 
 
 

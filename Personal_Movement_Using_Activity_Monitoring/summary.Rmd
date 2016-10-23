@@ -1,6 +1,6 @@
 
 ---
-title: "Reproducible Research Project"
+title: "Personal Movement Activity Monitoring - Reproducible Research Project"
 
 output: 
   html_document:
