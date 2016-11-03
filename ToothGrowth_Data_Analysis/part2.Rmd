@@ -1,0 +1,111 @@
+---
+title: "ToothGrowth data Analysis"
+author: "Author: Jianlei (John) Sun"
+date: "November 2, 2016"
+output: html_document
+---
+
+## 1. Overview
+In this project, we're going to analyze the ToothGrowth data in the R datasets package.
+
+The response is the length of odontoblasts (cells responsible for tooth growth) in 60 guinea pigs. Each animal received one of three dose levels of vitamin C (0.5, 1, and 2 mg/day) by one of two delivery methods, (orange juice or ascorbic acid (a form of vitamin C and coded as VC).
+
+- len : Tooth Length is numeric
+- supp: Supplement is Factor consisting of OJ and VC
+- dose: Dosage is numeric. As it is just 0.5, 1 and 2, we will have to convert it to factor so that it is easier for analysis
+
+## 2. Load the ToothGrowth data and perform some basic exploratory data analyses
+
+```{r}
+
+library(datasets)
+library(ggplot2)
+
+ToothGrowth$dose <- as.factor(ToothGrowth$dose)
+str(ToothGrowth)
+
+```
+
+Display a boxplot for the dataset:
+
+```{r}
+
+qplot(dose, len, data = ToothGrowth, facets = supp ~ ., geom = "boxplot", fill = dose, xlab = "Dose (mg/day)", ylab = "Tooth Length (mm)", main = "Boxplot of tooth length vs. dose")
+
+```
+
+## 3. Provide a basic summary of the data.
+
+```{r}
+summary(ToothGrowth)
+```
+
+## 4. Use confidence intervals and/or hypothesis tests to compare tooth growth by supp and dose. (Only use the techniques from class, even if there's other approaches worth considering)
+
+### 4.1 Hypothesis Testing 1 - the impact of dosage on tooth growth
+
+- Null Hypothesis: there is no effect of dosage on tooth growth.
+- Alternate Hypothesis: higer doses produce greater tooth growth.
+
+#### Compare between dose of 0.5mg and 1mg:
+
+```{r}
+t.test(len ~ dose, data = subset(ToothGrowth, dose %in% c(0.5, 1.0)))
+```
+
+Because the P value 1.268e-07 is less than 0.05, it is highly significant and we can reject the null hypothesis.
+
+#### Compare between dose of 1mg and 2mg:
+
+```{r}
+t.test(len ~ dose, data = subset(ToothGrowth, dose %in% c(1.0, 2.0)))
+```
+
+Because the P value 1.906e-05 is less than 0.05, it is highly significant and we can reject the null hypothesis.
+
+#### Compare between dose of 0.5mg and 2mg:
+
+```{r}
+t.test(len ~ dose, data = subset(ToothGrowth, dose %in% c(0.5, 2.0)))
+```
+
+Because the P value 4.398e-14 is less than 0.05, it is highly significant and we can reject the null hypothesis.
+
+Therefore, we reject the null hypothesis, and accept the alternative, i.e., the higer doses produce greater tooth growth.
+
+### 4.2 Hypothesis Testing 2 - differences between supplements by dosage
+
+- Null Hypothesis: there is no effect between supplement OJ and VC
+- Alternate Hypothesis: the OJ is better on toothgrowth than VC
+
+#### For 0.5mg:
+
+```{r}
+t.test(len ~ supp, data = subset(ToothGrowth, dose == 0.5))
+```
+
+Because the p-value is below 0.05, we accept the alternative, i.e., OJ is a better supplement than VC at dosage of 0.5mg.
+
+#### For 1mg:
+
+```{r}
+t.test(len ~ supp, data = subset(ToothGrowth, dose == 1))
+```
+
+Because the p-value is below 0.05, we accept the alternative, i.e., OJ is a better supplement than VC at dosage of 1mg.
+
+#### For 2mg:
+
+```{r}
+t.test(len ~ supp, data = subset(ToothGrowth, dose == 2))
+```
+
+Because the p-value is higher than 0.05, we cannot reject the null hypothesis. There is no significant difference between the two supplement at dosage of 1mg.
+
+## 5. State your conclusions and the assumptions needed for your conclusions.
+
+- Higher dosages have a positive influence on toothgrowth.
+
+- The p-value indicators for doses of 0.5 and 1.0 are less than 5% and the confidence intervals of the test do not contain 0. However, the p-value for the dose of 2.0 is greater than 5% and the confidence test contains 0. Therefore, we conclude that OJ is better than VC in promoting tooth growth for dosages of 0.5mg and 1mg. However, there is no significant difference at dosage of 2mg.
+
+
