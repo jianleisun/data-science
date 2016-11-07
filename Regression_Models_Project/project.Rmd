@@ -1,0 +1,110 @@
+---
+title: "Regression Models Course Project"
+output: html_document
+---
+
+Authors: Jianlei Sun, November 6 2016
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Executive Summary
+
+You work for Motor Trend, a magazine about the automobile industry. Looking at a data set of a collection of cars, they are interested in exploring the relationship between a set of variables and miles per gallon (MPG) (outcome). They are particularly interested in the following two questions:
+
+- “Is an automatic or manual transmission better for MPG”?
+- "Quantify the MPG difference between automatic and manual transmissions"?
+
+Conclusions: 
+
+- The type of transmission is significant for the fuel consumption (mpg), where manual transmission had on average 7.24 mpg higher consumption than automatic. The manual transmission contributes 1.81 times higher consumption, with assumption that all other variables are equal to zero.
+- In addition, it is observed that the transmission type was not so significant as other variables such as weight, horsepower and number of cylinders.  
+
+## Exploratory Data Analysis
+
+Load the data and rename the variables:
+
+```{r}
+data(mtcars)
+names(mtcars) <- c("mpg", "cylinders", "displacement", "horsepower", "axleratio", "weight", 
+"qmiletime","vs","transmission", "gears","carburetors")
+```
+
+Convert the data to factor variables:
+
+```{r}
+mtcars$transmission <- factor(mtcars$transmission)
+mtcars$cylinders <- factor(mtcars$cylinders)
+mtcars$gears <- factor(mtcars$gears)
+mtcars$carburetors <- factor(mtcars$carburetors)
+mtcars$vs <- factor(mtcars$vs)
+levels(mtcars$transmission) <- c("automatic", "manual")
+```
+
+Show the data summary:
+
+```{r}
+str(mtcars)
+```
+
+Test fuel consumption (mpg) between transimission types:
+
+```{r}
+t.test(mtcars$mpg ~ mtcars$transmission)
+```
+
+The p-value is less than 0.05, which means the difference is significant.
+The mean mpg difference between automatic and manual transmissions is (24.39-17.15) = 7.24 mpg
+
+Figure 1 (see Appendix) shows a boxplot of mpg vs. transmission type. 
+
+## Model Regression
+
+1) Model selection from stewise regession option:
+
+During the model selection, it is important to determine which variables have greatest impact on fule consumption and thus should be included. We will use the "backward stepwise regression" option, which starts with all predictors, and then removes those that are not statistically signifcant.
+
+```{r}
+fullModel <- lm(mpg ~ ., data = mtcars)
+bestmodel <- step(fullModel, direction="backward", k=2, trace=0) 
+summary(bestmodel)
+```
+
+- the p-value equal to 1.506E-10 is less than 0.05, indicating that the model might be significant;
+- the adjusted R-squared value equal to 0.8401 means that the model explains 84.01% of variance;
+- it is observed that the “weight”, “horsepower” and “cylinder” are more significant than the transmission type.
+
+2) test the significance of the final model:
+
+```{r}
+initialModel<- lm(mpg ~ transmission, data = mtcars)
+finalModel <- lm(mpg ~ cylinders + horsepower + weight + transmission, data = mtcars)
+anova(initialModel, finalModel)
+```
+
+The above p-value is much lower than 0.05, which indicates the final selected model is statisticaly significant.
+
+3) Residual Analysis
+
+Figure 2 (see appendix) shows the plot of residuals vs. fitted are randomly scattered without an obvious pattern. The Q-Q plot show most of points follow the line trend, indicating that residuals are normaly distributed.
+
+## Appendix 
+
+Figure 1:
+
+```{r}
+library(ggplot2)
+g <- ggplot(mtcars, aes(transmission, mpg))
+g <- g + geom_boxplot(aes(fill = transmission))
+g <- g + labs(title = "The boxplot of mpg vs. transmission types", x = "Transmission Types",
+              y = "The mpg values")
+g
+```
+
+Figure 2:
+
+```{r}
+par(mfrow=c(2, 2))
+plot(finalModel)
+```
