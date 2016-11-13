@@ -1,14 +1,7 @@
----
-title: "Machine Learning Project - Human Activity Prediction"
-output: 
-  html_document:
-    keep_md: true
-author: Jianlei Sun, November 10 2016
----
+# Machine Learning Project - Human Activity Prediction
+Jianlei Sun, November 10 2016  
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+
 
 ## Dataset Information
 
@@ -33,18 +26,52 @@ Your submission for the Peer Review portion should consist of a link to a Github
 
 ### 1.1 Load libraries
 
-```{r}
+
+```r
 library(caret)
+```
+
+```
+## Loading required package: lattice
+```
+
+```
+## Loading required package: ggplot2
+```
+
+```r
 library(rpart); library(rpart.plot)
 library(lattice)
 library(randomForest)
+```
 
+```
+## randomForest 4.6-12
+```
+
+```
+## Type rfNews() to see new features/changes/bug fixes.
+```
+
+```
+## 
+## Attaching package: 'randomForest'
+```
+
+```
+## The following object is masked from 'package:ggplot2':
+## 
+##     margin
+```
+
+```r
 set.seed(1234)
 ```
 
 ### 1.2 Download the dataset
 
-```{r}
+
+```r
 trainUrl <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
 testUrl <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
 
@@ -65,15 +92,14 @@ if (file.exists(nameTesting)) {
         download.file(testUrl,nameTesting)
         testing <- read.csv(nameTesting, na.strings=c("NA","#DIV/0!",""))
 }   
-
 ```
 
 ### 1.3 Clean and transform the dataset
 
 Remove variables with NA values, and remove the first seven columns that are not related to the results:
 
-```{r}
 
+```r
 training<-training[,colSums(is.na(training)) == 0]
 testing <-testing[,colSums(is.na(testing)) == 0]
 
@@ -89,7 +115,8 @@ testing <-testing[,-c(1:7)]
 
 The orginal training set is divided into two parts, one for training ("trainingData") and the other for cross validation ("validationData").
 
-```{r}
+
+```r
 inTrain <- createDataPartition(training$classe, p = 0.75, list = FALSE)
 trainingData <- training[inTrain,]
 validationData <- training[-inTrain,]
@@ -99,30 +126,104 @@ validationData <- training[-inTrain,]
 
 #### 2.2.1 Decision Tree - Build the prediction model
 
-```{r}
+
+```r
 modelDT <- rpart(classe ~ ., data = trainingData)
 # rpart.plot(modelDT, main="Classification Tree", extra=102, under=TRUE, faclen=0)
 rpart.plot(modelDT)
 ```
 
+![](project_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
 #### 2.2.2 Decision Tree - Make prediction
 
-```{r}
+
+```r
 predictDT <- predict(modelDT, validationData, type = "class")
 confusionMatrix(predictDT, validationData$classe)
 ```
 
+```
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    A    B    C    D    E
+##          A 1235  157   16   50   20
+##          B   55  568   73   80  102
+##          C   44  125  690  118  116
+##          D   41   64   50  508   38
+##          E   20   35   26   48  625
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.7394          
+##                  95% CI : (0.7269, 0.7516)
+##     No Information Rate : 0.2845          
+##     P-Value [Acc > NIR] : < 2.2e-16       
+##                                           
+##                   Kappa : 0.6697          
+##  Mcnemar's Test P-Value : < 2.2e-16       
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity            0.8853   0.5985   0.8070   0.6318   0.6937
+## Specificity            0.9307   0.9216   0.9005   0.9529   0.9678
+## Pos Pred Value         0.8356   0.6469   0.6313   0.7247   0.8289
+## Neg Pred Value         0.9533   0.9054   0.9567   0.9296   0.9335
+## Prevalence             0.2845   0.1935   0.1743   0.1639   0.1837
+## Detection Rate         0.2518   0.1158   0.1407   0.1036   0.1274
+## Detection Prevalence   0.3014   0.1790   0.2229   0.1429   0.1538
+## Balanced Accuracy      0.9080   0.7601   0.8537   0.7924   0.8307
+```
+
 #### 2.2.3 Random Forest - Build the prediction model
 
-```{r}
+
+```r
 modelRF <- randomForest(classe ~. , data = trainingData)
 ```
 
 #### 2.2.4 Random Forest - Make prediction
 
-```{r}
+
+```r
 predictRF <- predict(modelRF, validationData, type = "class")
 confusionMatrix(predictRF, validationData$classe)
+```
+
+```
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    A    B    C    D    E
+##          A 1394    3    0    0    0
+##          B    1  944   10    0    0
+##          C    0    2  843    6    0
+##          D    0    0    2  798    0
+##          E    0    0    0    0  901
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.9951          
+##                  95% CI : (0.9927, 0.9969)
+##     No Information Rate : 0.2845          
+##     P-Value [Acc > NIR] : < 2.2e-16       
+##                                           
+##                   Kappa : 0.9938          
+##  Mcnemar's Test P-Value : NA              
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity            0.9993   0.9947   0.9860   0.9925   1.0000
+## Specificity            0.9991   0.9972   0.9980   0.9995   1.0000
+## Pos Pred Value         0.9979   0.9885   0.9906   0.9975   1.0000
+## Neg Pred Value         0.9997   0.9987   0.9970   0.9985   1.0000
+## Prevalence             0.2845   0.1935   0.1743   0.1639   0.1837
+## Detection Rate         0.2843   0.1925   0.1719   0.1627   0.1837
+## Detection Prevalence   0.2849   0.1947   0.1735   0.1631   0.1837
+## Balanced Accuracy      0.9992   0.9960   0.9920   0.9960   1.0000
 ```
 
 - Why you made the choices you did?
@@ -137,9 +238,16 @@ The out-of-sample error is expected less than 0.5% for the Random Forest approac
 
 - Apply prediction model to predict 20 different test cases?
  
-```{r}
+
+```r
 predictTesting <- predict(modelRF, testing, type = "class")
 predictTesting
+```
+
+```
+##  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 
+##  B  A  B  A  A  E  D  B  A  A  B  C  B  A  E  E  A  B  B  B 
+## Levels: A B C D E
 ```
 
 
