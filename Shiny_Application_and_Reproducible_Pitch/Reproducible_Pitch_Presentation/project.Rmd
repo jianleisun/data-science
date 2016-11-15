@@ -1,0 +1,77 @@
+---
+title: "Shiny Appliation - mtcars"
+output: ioslides_presentation
+author: Jianlei (John) Sun
+date: November 15, 2016
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Reproducible Pitch for mtcars
+
+- This project consits of two parts. First, we need to create a Shiny application and deploy it on Rstudio's servers. Second, we should use the Rstudio Presenter to prepare a reproducible pitch presentation about the application. 
+- Please find datasets, source code, and outputs from the following link.
+ URL: https://github.com/jianleisun/data-science/tree/master/Shiny_Application_and_Reproducible_Pitch
+- This presentation includes a brief introduction to the data input and source code.
+
+## Dataset Information - mtcars
+
+### Motor Trend Car Road Tests
+
+The data was extracted from the 1974 Motor Trend US magazine, and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973–74 models).
+
+### Reference
+Henderson and Velleman (1981), Building multiple regression models interactively. Biometrics, 37, 391–411.
+
+```{r}
+library(datasets)
+head(mtcars, 3)
+```
+
+## Dataset Nomenclature
+
+**32 observations and 11 variables.**
+
+| Index | Field | Detail |
+------- | ----- | ------ |
+| [, 1] | mpg | Miles/(US) gallon |
+| [, 2]  | cyl | Number of cylinders |
+| [, 3]	| disp | Displacement (cu.in.) |
+| [, 4]	| hp | Gross horsepower |
+| [, 5]	| drat | Rear axle ratio |
+| [, 6]	| wt | Weight (lb/1000) |
+| [, 7]	| qsec | 1/4 mile time |
+| [, 8]	| vs | V/S |
+| [, 9]	| am | Transmission (0 = automatic, 1 = manual) |
+| [,10]	| gear | Number of forward gears |
+| [,11]	| carb | Number of carburetors |
+
+## Analysis - main code
+```r
+shinyServer(function(input, output) {
+    
+   ...
+    
+    fit <- reactive({
+        lm(as.formula(txt1()), data=data)
+    })
+    
+    ...
+    
+    output$fit <- renderPrint({
+        summary(fit())
+    })
+    
+    output$mpgPlot <- renderPlot({
+        with(data, {
+            plot(as.formula(txt1()))
+            abline(fit(), col=2)
+        })
+    })
+    
+})
+```
+
+
